@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An exploratory microscopy acquisition-QC analysis prepared for the Finkbeiner Lab by Cathy Liu.">
+  <title>Exploratory Analyses Inspired by the Finkbeiner Lab</title>
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+  <main class="page">
+    <h1>Exploratory Analyses Inspired by the Finkbeiner Lab</h1>
+    <div class="byline">
+      Cathy Liu · Computational and cell biology · <a href="mailto:cathyliu014@gmail.com">cathyliu014@gmail.com</a><br>
+      Prepared for the Finkbeiner Lab, Gladstone Institutes<br>
+      Personal exploratory project, September 2026
+    </div>
+
+    <nav class="section-nav" aria-label="Demo sections">
+      <a href="#motivation">Motivation</a>
+      <a href="#a1">Image check</a>
+      <a href="#a2">QC gate</a>
+      <a href="#relevance">Relevance</a>
+    </nav>
+
+    <p class="opening">The Finkbeiner Lab combines patient-derived neural models with robotic microscopy to follow individual cells over time. That makes acquisition quality more than a cosmetic concern: an out-of-focus or saturated frame can interrupt a trajectory, distort morphology, or create an apparent change that is not biological.</p>
+    <p class="opening">I built a small acquisition stress test from the lab's open-source microscope-image-quality code. It applies the repository's optical point-spread function and exposure transform to a public test image, then makes the keep-versus-review rule explicit before images enter longitudinal analysis.</p>
+
+    <hr id="motivation">
+    <section aria-labelledby="how-heading">
+      <h2 id="how-heading">How it works</h2>
+      <p>The source is a 16-bit BBBC006 cell image included with the lab's <a href="https://github.com/finkbeiner-lab/microscopeimagequality">microscopeimagequality</a> repository. I ran its Airy point-spread-function and sensor-exposure functions at seven simulated z offsets and three exposure factors. Focus retention is normalized edge energy relative to the z=0 image at the same exposure; saturation is the fraction of raw pixels at or above 98% of the 16-bit range. Display images are contrast-stretched only for viewing.</p>
+    </section>
+
+    <hr id="a1">
+    <section aria-labelledby="analysis-one-heading">
+      <h2 id="analysis-one-heading">Analysis 1 — Inspect an acquisition condition</h2>
+      <div class="experiment">
+        <div class="exp-label">Method</div>
+        <div class="exp-title">Separate loss of focus from excess exposure</div>
+        <p>Choose a simulated z offset and exposure. The image, focus-retention curve, and recommendation update together.</p>
+      </div>
+
+      <div class="panel">
+        <div class="control-row">
+          <label for="z-select">Defocus offset</label>
+          <select id="z-select"></select>
+          <label for="exposure-select">Exposure factor</label>
+          <select id="exposure-select"></select>
+        </div>
+        <div class="image-pair">
+          <figure><img id="reference-image" src="assets/z0_e50.png" alt="Reference microscopy crop at zero micrometre offset and 50 times exposure"><figcaption>Reference · z=0 µm, 50× exposure</figcaption></figure>
+          <figure><img id="condition-image" src="assets/z4_e50.png" alt="Selected simulated microscopy acquisition"><figcaption id="condition-caption">Selected condition</figcaption></figure>
+        </div>
+        <svg id="focus-curve" class="viz" viewBox="0 0 600 280" role="img" aria-label="Focus retention across simulated defocus offsets"></svg>
+        <div class="readout" id="readout" aria-live="polite"></div>
+        <figcaption>Twenty-one derived conditions from one public source image; optical transforms come from the target-owned repository at commit <a href="https://github.com/finkbeiner-lab/microscopeimagequality/commit/4190ba36d7e672e7b430516b7c3a59c8294efe0b">4190ba3</a>.</figcaption>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric"><span class="metric-val" id="metric-focus">0%</span><span class="metric-desc">focus retained</span></div>
+        <div class="metric"><span class="metric-val" id="metric-saturation">0%</span><span class="metric-desc">pixels saturated</span></div>
+        <div class="metric"><span class="metric-val" id="metric-action">—</span><span class="metric-desc">QC action</span></div>
+      </div>
+
+      <div class="value-note"><strong>What this lets the lab do:</strong> distinguish a likely acquisition problem from a biological change before a weak frame enters tracking or phenotype analysis.</div>
+      <div class="value-note"><strong>Where Cathy adds value:</strong> translate image formation into a transparent QC rule, connect the rule to experimental consequences, and keep the analysis auditable alongside assay records.</div>
+    </section>
+
+    <hr id="a2">
+    <section aria-labelledby="analysis-two-heading">
+      <h2 id="analysis-two-heading">Analysis 2 — Stress-test the QC gate</h2>
+      <div class="experiment">
+        <div class="exp-label">Decision</div>
+        <div class="exp-title">How strict should the review queue be?</div>
+        <p>Change the minimum focus retention and maximum saturated-pixel fraction. The matrix shows which conditions are kept, reviewed, or marked for reacquisition.</p>
+      </div>
+      <div class="panel">
+        <div class="slider-row">
+          <label for="focus-threshold">Minimum focus retention <strong id="focus-threshold-value">60%</strong></label>
+          <input id="focus-threshold" type="range" min="35" max="90" step="5" value="60">
+          <label for="saturation-threshold">Maximum saturated pixels <strong id="saturation-threshold-value">1.0%</strong></label>
+          <input id="saturation-threshold" type="range" min="0" max="3" step="0.25" value="1">
+        </div>
+        <div class="gate-summary" id="gate-summary" aria-live="polite"></div>
+        <div class="qc-matrix" id="qc-matrix"></div>
+        <div class="legend"><span><i class="keep"></i>Keep</span><span><i class="review"></i>Review</span><span><i class="reacquire"></i>Reacquire</span></div>
+      </div>
+      <p>At the default 60% focus and 1% saturation limits, the gate keeps 6 of 21 conditions. This is a sensitivity analysis, not a validated operating specification: actual thresholds should be set on the lab's imaging modality, stain, cell type, and downstream error tolerance.</p>
+    </section>
+
+    <hr id="relevance">
+    <section aria-labelledby="relevance-heading">
+      <h2 id="relevance-heading">Why this matters for the lab</h2>
+      <p>Robotic microscopy gains power from repeated measurements of the same cell. A small acquisition defect can therefore propagate through segmentation, tracking, survival, and morphology readouts. A simple pre-analysis gate creates a review queue while preserving the raw image and the reason it was flagged. The same structure could accept the lab's MIQ class probabilities, patch certainty, and plate metadata rather than the two descriptive metrics used here.</p>
+
+      <h2>What I would bring</h2>
+      <p>I bring mammalian cell-culture and molecular-assay exposure, microscopy and IVIS experience, R/Python biomedical analysis, and regulated laboratory documentation. I would use that combination to support careful assays, traceable QC, and quantitative interpretation. This demo does not represent prior iPSC differentiation or independent high-content microscopy experience.</p>
+
+      <h2>Methods note</h2>
+      <p class="methods-note">This is a derived analysis of a public repository test image, not a reanalysis of patient cells. The image originates from BBBC006 and is included in the repository with permission; the code is Apache-2.0 licensed. I executed <code>get_airy_psf</code>, <code>ImageDegrader.apply_blur_kernel</code>, and <code>ImageDegrader.set_exposure</code> from commit <a href="https://github.com/finkbeiner-lab/microscopeimagequality/tree/4190ba36d7e672e7b430516b7c3a59c8294efe0b">4190ba36</a>. The optical constants follow the repository defaults: 500 nm wavelength, 0.5 numerical aperture, refractive index 1.0, and a 21-pixel kernel spanning 5 µm. I did not run the archived TensorFlow classifier; focus retention is a transparent normalized edge-energy proxy and cannot establish biological image usability. The accompanying <a href="https://link.springer.com/article/10.1186/s12859-018-2087-4">paper</a> reports a trained model with 11 defocus levels and patch-level certainty.</p>
+    </section>
+
+    <footer>
+      Cathy Liu · <a href="mailto:cathyliu014@gmail.com">cathyliu014@gmail.com</a> · <a href="tel:+14152163799">415-216-3799</a><br>
+      Epilepsy neurostimulation project, <a href="https://arxiv.org/abs/2606.04339">arXiv:2606.04339</a>
+    </footer>
+  </main>
+
+  <script src="data.js?v=1"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
